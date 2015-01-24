@@ -1,63 +1,74 @@
+#include <EEPROM.h>
 #include <RCSwitch.h>
 #include <OneWire.h>
 #include <DallasTemperature.h>
 
+
+//Constants
 #define SERIAL_BAUD 9600
+#define SERIAL_SEPARATOR '\n'
+
 #define RECEIVE_CHANNEL 0
 #define TRANSMITTER_PIN 10
-#define ONE_WIRE_PIN 12
+#define TRANSMIT_BITLENGTH 24
 
-RCSwitch mySwitch = RCSwitch();
-String incoming = "";
-unsigned long switchCode;
+#define ONEWIRE_PIN 12
 
-OneWire oneWire(ONE_WIRE_PIN);
-DallasTemperature sensors(&oneWire);
-unsigned long previousMillis = 0;
-unsigned long temperatureInterval = 5000;
+
+//433MHz Transmitter & Receiver
+RCSwitch radio = RCSwitch();
+String serialInput = "";
+unsigned long radioCode;
+
+//Temperature Measurement
+OneWire oneWire(ONEWIRE_PIN);
+DallasTemperature temperatureSensors(&oneWire);
+unsigned long temperaturePrevMillis = 0;
+unsigned long measureTemperatureInterval = 10000;
+
 
 void setup() {
   Serial.begin(SERIAL_BAUD);
   
-  mySwitch.enableReceive(RECEIVE_CHANNEL);
-  mySwitch.enableTransmit(TRANSMITTER_PIN);
+  radio.enableReceive(RECEIVE_CHANNEL);
+  radio.enableTransmit(TRANSMITTER_PIN);
   
-  sensors.begin();
+  temperatureSensors.begin();
 }
 
 void loop() {
   send();
   receive();
-  getTemperature();
+  measureTemperature();
 }
 
 void receive() {
-  if(mySwitch.available()) {
-    int value = mySwitch.getReceivedValue();
+  if(radio.available()) {
+    int value = radio.getReceivedValue();
     if(value != 0) {
       Serial.print("R");
-      Serial.print(mySwitch.getReceivedValue());
-      Serial.print("#");
+      Serial.print(radio.getReceivedValue());
+      Serial.print(SERIAL_SEPARATOR);
     }
-    mySwitch.resetAvailable();
+    radio.resetAvailable();
   }
 }
 
 void send() {
   if(Serial.available() > 0) {
-    incoming = Serial.readStringUntil('#');
-    switchCode = incoming.toInt();
-    mySwitch.send(switchCode, 24);
+    serialInput = Serial.readStringUntil(SERIAL_SEPARATOR);
+    radioCode = serialInput.toInt();
+    radio.send(radioCode, TRANSMIT_BITLENGTH);
   }
 }
 
-void getTemperature() {
-  /*if(millis() - previousMillis > temperatureInterval) {
-    previousMillis = millis();
+void measureTemperature() {
+  if(millis() - temperaturePrevMillis > measureTemperatureInterval) {
+    temperaturePrevMillis = millis();
     
-    sensors.requestTemperatures();
+    temperatureSensors.requestTemperatures();
     Serial.print("T");
-    Serial.print(sensors.getTempCByIndex(0));
-    Serial.print("#");
-  }*/
+    Serial.print(temperatureSensors.getTempCByIndex(0));
+    Serial.print(SERIAL_SEPARATOR);
+  }
 }
