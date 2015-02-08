@@ -6,8 +6,8 @@
 #include <Ethernet.h>
 
 //Constants
-#define SERIAL_BAUD 9600
-#define SERIAL_SEPARATOR '\n'
+//#define SERIAL_BAUD 9600
+//#define SERIAL_SEPARATOR '\n'
 
 #define RECEIVE_CHANNEL 0
 #define TRANSMITTER_PIN 8
@@ -18,10 +18,10 @@
 #define BUFSIZE 255
 
 
+
 //433MHz Transmitter & Receiver
 RCSwitch radio = RCSwitch();
-String serialInput = "";
-//unsigned long radioCode;
+//String serialInput = "";
 
 //Temperature Measurement
 OneWire oneWire(ONEWIRE_PIN);
@@ -35,24 +35,25 @@ IPAddress ip(192, 168, 1, 14);
 EthernetServer server(80);
 
 void setup() {
-  Serial.begin(SERIAL_BAUD);
+  //Serial.begin(SERIAL_BAUD);
   
-  radio.enableReceive(RECEIVE_CHANNEL);
+  //radio.enableReceive(RECEIVE_CHANNEL);
   radio.enableTransmit(TRANSMITTER_PIN);
+  radio.setRepeatTransmit(20);
   
   temperatureSensors.begin();
   
   Ethernet.begin(mac, ip);
-  Serial.print("Webserver running at ");
-  Serial.println(Ethernet.localIP());
+  //Serial.print("Webserver running at ");
+  //Serial.println(Ethernet.localIP());
 }
 
 void loop() {
-  receive();
+  //receive();
   serveData();
 }
 
-void receive() {
+/*void receive() {
   if(radio.available()) {
     int value = radio.getReceivedValue();
     if(value != 0) {
@@ -62,11 +63,11 @@ void receive() {
     }
     radio.resetAvailable();
   }
-}
+}*/
 
 void send(unsigned long radioCode) {
   if(radioCode != 0) {
-    Serial.print(radioCode);
+    //Serial.print(radioCode);
     radio.send(radioCode, TRANSMIT_BITLENGTH);
   }
 }
