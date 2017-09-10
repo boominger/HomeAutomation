@@ -1,7 +1,5 @@
 //#include <EEPROM.h>
 #include <RCSwitch.h>
-#include <OneWire.h>
-#include <DallasTemperature.h>
 #include <SPI.h>
 #include <Ethernet.h>
 
@@ -13,8 +11,6 @@
 #define TRANSMITTER_PIN 8
 #define TRANSMIT_BITLENGTH 24
 
-#define ONEWIRE_PIN 9
-
 #define BUFSIZE 255
 
 
@@ -22,12 +18,6 @@
 //433MHz Transmitter & Receiver
 RCSwitch radio = RCSwitch();
 //String serialInput = "";
-
-//Temperature Measurement
-OneWire oneWire(ONEWIRE_PIN);
-DallasTemperature temperatureSensors(&oneWire);
-unsigned long temperaturePrevMillis = 0;
-unsigned long measureTemperatureInterval = 10000;
 
 //Webserver
 byte mac[] = { 0x90, 0xA2, 0xDA, 0x0F, 0x83, 0x4C };
@@ -40,8 +30,6 @@ void setup() {
   //radio.enableReceive(RECEIVE_CHANNEL);
   radio.enableTransmit(TRANSMITTER_PIN);
   radio.setRepeatTransmit(20);
-  
-  temperatureSensors.begin();
   
   Ethernet.begin(mac, ip);
   //Serial.print("Webserver running at ");
@@ -70,11 +58,6 @@ void send(unsigned long radioCode) {
     //Serial.print(radioCode);
     radio.send(radioCode, TRANSMIT_BITLENGTH);
   }
-}
-
-float measureTemperature() {
-  temperatureSensors.requestTemperatures();
-  return temperatureSensors.getTempCByIndex(0);
 }
 
 void serveData() {
@@ -110,9 +93,6 @@ void serveData() {
           if(action == "socket") {
             send(value.toInt());
             printOutput(200, client, jsonOutput(action, value, true));
-          } else if(action == "temp") {
-            String outputValue = String(measureTemperature());
-            printOutput(200, client, jsonOutput(action, outputValue, true));
           }
         } else {
           printOutput(200, client, jsonOutput(action, value, false));
